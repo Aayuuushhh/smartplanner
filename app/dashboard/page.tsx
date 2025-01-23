@@ -152,6 +152,7 @@ const fetchEvents = async () => {
 
 
   const showBrowserNotification = (event: Event) => {
+    console.log("notification") ; 
     if (Notification.permission === "granted") {
       new Notification(`Reminder: ${event.title} starts in ${notificationTimeRef.current} minutes!`);
     } else if (Notification.permission !== "denied") {
@@ -210,6 +211,7 @@ const fetchEvents = async () => {
       fetchNotificationSetting();
 
       const intervalId = setInterval(() => {
+        console.log("Interval");
         checkForNotifications();
       }, 30000); // 30 seconds
   
@@ -247,6 +249,7 @@ const fetchEvents = async () => {
       localStorage.setItem("theme", t);
     }
     setTheme(t!);
+    Notification.requestPermission() ; 
   }, [selectedDate, allEvents , setTheme]);
 
   const handleDateClick = (arg: any) => {
@@ -286,7 +289,6 @@ const fetchEvents = async () => {
     setIsOpen(true);
   };
 
-  useEffect(() => {console.log(isAdmin)} ,[isAdmin] ) ; 
   const handleEventClick = async (info: any) => {
 
     const token = localStorage.getItem("token");
@@ -342,7 +344,7 @@ const fetchEvents = async () => {
           endDate: adjustedEndDate.toISOString(), // Set the new end date
           recurrencedata: eventData.recurrencedata ? JSON.parse(eventData.recurrencedata) : "",
         };
-
+        console.log(adjustedEvent);
         setSelectedEvent(adjustedEvent);
         setIsOpen(true);
       }
@@ -362,64 +364,61 @@ const fetchEvents = async () => {
     if (selectedEvent.title && selectedEvent.date && selectedEvent.endDate) {
       const token = localStorage.getItem("token");
       const email = localStorage.getItem("email");
+      
       if (token && email) {
         try {
-          let updatedEvents: Event[] = [];
-
+          let updatedEvents: Event[] = [...allEvents]; // Create a copy of existing events
+          
+          const newEvent: Event = {
+            date: selectedEvent.date!,
+            endDate: selectedEvent.endDate!,
+            title: selectedEvent.title!,
+            id: selectedEvent.id || Date.now().toString(),
+            color: selectedEvent.color || "#42A5F5",
+            timezone: selectedEvent.timezone || "Asia/Kolkata",
+            email,
+            isrecurrence: selectedEvent.isrecurrence ?? 0,
+            recurrencedata: selectedEvent.recurrencedata,
+            calendartype: "defaultType",
+            calendartypeid: "1",
+            location: selectedEvent.location || "",
+            description: selectedEvent.description || "",
+            recenddate: selectedEvent.isrecurrence ? selectedEvent.recurrencedata?.end_date!.toString().replace(' ', 'T') : "",
+          };
+  
+          const backendEvent: BackendEvent = {
+            StartDate: newEvent.date!,
+            EndDate: newEvent.endDate!,
+            Title: newEvent.title!,
+            Id: selectedEvent.id ? (selectedEvent.id as unknown as number) : 0,
+            Color: newEvent.color!,
+            email: "",
+            Recurrence: newEvent.isrecurrence,
+            timezone: newEvent.timezone!,
+            recurrencedata: newEvent.recurrencedata ? JSON.stringify(newEvent.recurrencedata) : "",
+            Location: newEvent.location!,
+            Description: newEvent.description || "",
+            recenddate: newEvent.isrecurrence ? newEvent.recenddate! : "",
+            calendartype: "",
+            calendartypeid: ""
+          };
+  
+          // Save to backend
+          const createdEvent = await createEvent(backendEvent, token);
+          newEvent.id = createdEvent.id.toString();
+  
           if (selectedEvent.id) {
-            updatedEvents = allEvents.map((event) =>
-              event.id === selectedEvent.id
-                ? {
-                    ...event,
-                    ...selectedEvent,
-                    id: event.id,
-                    calendartype: selectedEvent.calendartype || event.calendartype,
-                    calendartypeid: selectedEvent.calendartypeid || event.calendartypeid,
-                  } as Event
-                : event
+            // Update existing event
+            updatedEvents = updatedEvents.map((event) =>
+              event.id === selectedEvent.id ? newEvent : event
             );
           } else {
-            const newEvent: Event = {
-              date: selectedEvent.date!,
-              endDate: selectedEvent.endDate!,
-              title: selectedEvent.title!,
-              id: Date.now().toString(),
-              color: selectedEvent.color || "#42A5F5",
-              timezone: selectedEvent.timezone || "Asia/Kolkata",
-              email,
-              isrecurrence: selectedEvent.isrecurrence ?? 0,
-              recurrencedata: selectedEvent.recurrencedata,
-              calendartype: "defaultType",
-              calendartypeid: "1",
-              location: selectedEvent.location || "",
-              description: selectedEvent.description || "",
-              recenddate:selectedEvent.isrecurrence ? selectedEvent.recurrencedata?.end_date!.toString().replace(' ', 'T') : "",
-            };
-
-            const backendEvent: BackendEvent = {
-              StartDate: newEvent.date!,
-              EndDate: newEvent.endDate!,
-              Title: newEvent.title!,
-              Id: 0,
-              Color: newEvent.color!,
-              email: "", 
-              Recurrence: newEvent.isrecurrence,
-              timezone: newEvent.timezone!,
-              recurrencedata: newEvent.recurrencedata ? JSON.stringify(newEvent.recurrencedata) : "",
-              Location: newEvent.location!,
-              Description: newEvent.description || "",
-              recenddate: newEvent.isrecurrence? newEvent.recenddate! : "",
-              calendartype : "" ,
-              calendartypeid : ""
-            };
-            const createdEvent = await createEvent(backendEvent, token);
-            newEvent.id = createdEvent.id.toString();
-            updatedEvents = [...allEvents, newEvent];
+            // Add new event
+            updatedEvents.push(newEvent);
           }
-
+  
           setAllEvents(updatedEvents);
           handleClose();
-          location.reload();
         } catch (error) {
           console.error("Error saving event:", error);
         }

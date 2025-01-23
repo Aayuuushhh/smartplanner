@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { FaEdit } from 'react-icons/fa';
-import DateTimePicker from './DateTimePicker';
+import DateTimePicker from './DateTimePicker2';
 import { Event, RecurrenceData } from '../app/types/types';
 import Description from './Description';
 
@@ -147,7 +147,7 @@ export default function EventDialog({
     const byMonthText = type === 'Month' && by_month ? `by ${by_month}` : '';
 
     return (
-      <div className="mb-1 p-1 border border-gray-300 rounded">
+      <div className="mb-1 p-1 border border-gray-300 rounded mt-2">
         <div className="flex justify-between items-center">
           <div>
             <p>{repeatText} {endText} {byDayText}</p>
@@ -192,7 +192,7 @@ export default function EventDialog({
                         className="w-full border border-gray-300 rounded p-2"
                       />
                     </div>
-                    <div className="flex flex-row gap-4">
+                    <div className="flex flex-row gap-5">
                       <div className="w-1/3">
                         <DateTimePicker
                           label="Start Date and Time"
@@ -221,7 +221,7 @@ export default function EventDialog({
                         />
                       </div>
                       <div className='w-1/3'>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                           Frequency
                         </label>
                         <select

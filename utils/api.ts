@@ -21,6 +21,7 @@ export interface otpVerification {
 const API_URL = process.env.NEXT_PUBLIC_SERVICE_APP_URL;
 
 export const validateUser = async (signInDetail: LoginDetail) => {
+    console.log("validateUser reached");
     const payload = {
         Username: signInDetail.username,
         DeviceId: signInDetail.DeviceId, //
@@ -31,6 +32,7 @@ export const validateUser = async (signInDetail: LoginDetail) => {
     const encryptedPayload = encryptObject(payload);
     try {
         const response = await axios.post("/api/posthandler", { data: encryptedPayload });
+        console.log(response.data); 
         return response.data === "Code Sent";
     } catch (error) {
         console.error("Error during OTP validation:", error);
@@ -122,7 +124,7 @@ export const createEvent = async (event: BackendEvent, token: string) => {
         StartDate: event.StartDate,
         EndDate: event.EndDate,
         Title: event.Title,
-        Id: 0,
+        Id: event.Id,
         Color: event.Color,
         calendartypeid : event.calendartypeid || ""  ,
         calendartype : event.calendartype || "" , 
