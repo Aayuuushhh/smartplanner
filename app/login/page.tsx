@@ -370,77 +370,77 @@ export default function Signin() {
     }
   };
 
-  const handlePostSignIn = async () => {
-    const session = await getSession();
-    const user = session?.user;
-    const token = localStorage.getItem('token')
 
-    if (user?.email) {
-        if(token){
-            router.push("/dashboard"); 
-            return ; 
-        }
-      const deviceId = localStorage.getItem("deviceId") || (await generateFingerprint());
-
-      const isGoogle = session?.provider === "google";
-      
-      const newUser = {
-        firstName: user.given_name || "",
-        lastName: user.family_name || "",
-        displayName: user.name || "",
-        email: user.email,
-        deviceId: deviceId,
-        guser: isGoogle ? JSON.stringify(user) : "", // Only set if it's Google
-        muser: "", 
-      };
-  
-      console.log("New User:", newUser);
-  
-      try {
-        setLoading(true);
-        
-        const codeRecieved = await validateUser({
-            username : user.email ,
-            DeviceId : deviceId
-        }) ; 
-        
-        if(codeRecieved){
-            setIsOTPSent(true) ; 
-            const details = {
-                isOtpSent: true,
-                deviceId: deviceId ,
-                firstName : newUser.firstName,
-                lastName : newUser.lastName,
-                displayName : newUser.displayName,
-                email : newUser.email,
-                guser : isGoogle? JSON.stringify(user) : "",
-                muser : "",
-                accessToken : session?.user.accessToken, 
-                refreshToken : session?.user.refreshToken,
-                scope : "google",
-                caltype :1 
-            }
-            setGoogleAndMicrosoftOTPDetail(details) ; 
-            console.log(googleAndMicrosoftOTPDetail) ;
-
-            setLoading(false); 
-        } 
-      } catch (error) {
-        setLoading(false);
-        console.error("Error during user detail submission:", error);
-        setErrorMessage("Something went wrong");
-      }
-    } else {
-      console.error("Failed to retrieve user information");
-    }
-  };
   
   
 
   useEffect(() => {
-    // Run this after redirection
+
+    const handlePostSignIn = async () => {
+      const session = await getSession();
+      const user = session?.user;
+      const token = localStorage.getItem('token')
+  
+      if (user?.email) {
+          if(token){
+              router.push("/dashboard"); 
+              return ; 
+          }
+        const deviceId = localStorage.getItem("deviceId") || (await generateFingerprint());
+  
+        const isGoogle = session?.provider === "google";
+        
+        const newUser = {
+          firstName: user.given_name || "",
+          lastName: user.family_name || "",
+          displayName: user.name || "",
+          email: user.email,
+          deviceId: deviceId,
+          guser: isGoogle ? JSON.stringify(user) : "", // Only set if it's Google
+          muser: "", 
+        };
+    
+        console.log("New User:", newUser);
+    
+        try {
+          setLoading(true);
+          
+          const codeRecieved = await validateUser({
+              username : user.email ,
+              DeviceId : deviceId
+          }) ; 
+          
+          if(codeRecieved){
+              const details = {
+                  isOtpSent: true,
+                  deviceId: deviceId ,
+                  firstName : newUser.firstName,
+                  lastName : newUser.lastName,
+                  displayName : newUser.displayName,
+                  email : newUser.email,
+                  guser : isGoogle? JSON.stringify(user) : "",
+                  muser : "",
+                  accessToken : session?.user.accessToken, 
+                  refreshToken : session?.user.refreshToken,
+                  scope : "google",
+                  caltype :1 
+              }
+              setGoogleAndMicrosoftOTPDetail(details) ; 
+              setIsOTPSent(true) ; 
+  
+              setLoading(false); 
+          } 
+        } catch (error) {
+          setLoading(false);
+          console.error("Error during user detail submission:", error);
+          setErrorMessage("Something went wrong");
+        }
+      } else {
+        console.error("Failed to retrieve user information");
+      }
+    };
     handlePostSignIn();
-  }, [handlePostSignIn]);
+  }, []);
 
 
   return (
